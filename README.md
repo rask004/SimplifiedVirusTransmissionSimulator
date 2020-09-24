@@ -1,0 +1,2 @@
+# SimplifiedVirusTransmissionSimulator
+Highly simplified virus transmission simulator
