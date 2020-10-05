@@ -60,10 +60,23 @@ header h1 {
 }
 
 .circle {
+  margin: 0;
+  padding: 0;
+  color: black;
+  appearance: none;
   display: inline-block;
   border-radius: 100%;
   border: 0.5px solid black;
   width: 20px;
+}
+
+.circle.mask {
+  border-style: dashed;
+}
+
+.circle:hover {
+  border-width: 2px;
+  border-color: grey;
 }
 
 .circle:after {

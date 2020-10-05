@@ -179,6 +179,11 @@ var setControlsDisabled = function (disable) {
   document.querySelector("#control-mask-reduction").disabled = disable;
 };
 
+var changeMask = function (node) {
+  let person = node.data.person;
+  person.wearingMask = !person.wearingMask;
+}
+
 /*** VISUALIZATION SETUP ***/
 var prepareVisualizationData = function () {
   var p = new Person(
@@ -478,10 +483,7 @@ var renderInitialVisualization = function () {
 
   var renderBubble = function (
     origin,
-    bubbleName,
-    nodes,
-    initAngle = 0,
-    clockwise = true
+    bubbleName
   ) {
     let element = document.createElement("div");
     element.id = bubbleName;
@@ -491,13 +493,21 @@ var renderInitialVisualization = function () {
     element.style.width = `${bubbleWidth}px`;
     element.className = "bubble";
     arena.appendChild(element);
+  };
 
+  var renderPeople = function (
+    origin,
+    nodes,
+    initAngle = 0,
+    clockwise = true
+  ) {
     let r = (bubbleWidth - bubbleWidth / nodes.length) / 3;
     let aDiff = 360 / nodes.length;
     let a = initAngle;
     let x, y;
+    let tooltip;
 
-    for (n of nodes) {
+    for (let n of nodes) {
       x =
         r * Math.sin((a * Math.PI) / 180) +
         origin.x +
@@ -508,8 +518,9 @@ var renderInitialVisualization = function () {
         origin.y +
         bubbleWidth / 2 -
         personWidth / 2;
+      tooltip = `${n.data.person.id}`;
 
-      let e = document.createElement("div");
+      let e = document.createElement("button");
       e.classList.add("circle");
       if (
         n.data.person.infectionState === Person.infectionStates.PRE_INFECTIOUS
@@ -518,11 +529,22 @@ var renderInitialVisualization = function () {
       } else {
         e.classList.add("clean");
       }
+      if (n.data.person.wearingMask) {
+        e.classList.add("mask");
+      } else {
+        e.classList.remove("mask");
+      }
       e.id = n.id;
       e.style.position = "absolute";
       e.style.left = `${x}px`;
       e.style.top = `${y}px`;
       e.style.width = `${20}px`;
+      e.title = tooltip;
+
+      e.onclick = function () {
+        changeMask(n);
+        //console.log(n.data.person);
+      };
 
       n.element = e;
       arena.appendChild(e);
@@ -557,14 +579,14 @@ var renderInitialVisualization = function () {
 
     w = Math.sqrt(
       Math.pow(sElementLeft - eElementLeft, 2) +
-        Math.pow(sElementTop - eElementTop, 2)
+      Math.pow(sElementTop - eElementTop, 2)
     );
 
     // I ain't got no clue why I gotta add 180 here but it works and it's 2 in the morning.
     a =
       (Math.atan2(sElementTop - eElementTop, sElementLeft - eElementLeft) *
         180) /
-        Math.PI +
+      Math.PI +
       180;
 
     let link = document.createElement("div");
@@ -582,26 +604,6 @@ var renderInitialVisualization = function () {
     //console.log(link, startElement, endElement);
   };
 
-  // for (n of peopleNodes) {
-  //   let e = document.createElement("div");
-  //   e.classList.add("circle");
-  //   if (
-  //     n.data.person.infectionState === Person.infectionStates.PRE_INFECTIOUS
-  //   ) {
-  //     e.classList.add("incubating");
-  //   } else {
-  //     e.classList.add("clean");
-  //   }
-  //   e.id = n.id;
-  //   e.style.position = "absolute";
-  //   e.style.left = `${visualisationRenderingData[n.id].x}px`;
-  //   e.style.top = `${visualisationRenderingData[n.id].y}px`;
-  //   e.style.width = `${personWidth}px`;
-
-  //   n.element = e;
-  //   arena.appendChild(e);
-  // }
-
   for (let i = 1; i <= 6; i++) {
     let bubbleName = `bubble${i}`;
     let origin = {
@@ -613,7 +615,8 @@ var renderInitialVisualization = function () {
     let bubbleNodes = peopleNodes.filter(function (node) {
       return node.data.group === bubbleName;
     });
-    renderBubble(origin, bubbleName, bubbleNodes, initAngle, clockwise);
+    renderBubble(origin, bubbleName);
+    renderPeople(origin, bubbleNodes, initAngle, clockwise);
   }
 
   let linkedNodes = [];
@@ -671,6 +674,11 @@ var renderUpdatedVisualization = function () {
       // e.classList.remove("incubating");
       // e.classList.remove("infectious");
       // e.classList.remove("post.infection");
+    }
+    if (n.data.person.wearingMask) {
+      e.classList.add("mask");
+    } else {
+      e.classList.remove("mask");
     }
 
     n.element = e;
