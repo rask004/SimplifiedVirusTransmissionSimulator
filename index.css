@@ -3,6 +3,73 @@
   --controls-width: 240px;
 }
 
+@keyframes incubation {
+  0% {
+    transform: scale(1.5, 1.5);
+  }
+
+  10% {
+    background-color: white;
+  }
+
+  90% {
+    background-color: #ffff00;
+    transform: scale(1, 1);
+  }
+
+  100% {}
+}
+
+@keyframes infectious {
+  0% {
+    transform: scale(1.5, 1.5);
+  }
+
+  10% {
+    background-color: white;
+  }
+
+  90% {
+    background-color: #ff7090;
+    transform: scale(1, 1);
+  }
+
+  100% {}
+}
+
+@keyframes post-infection {
+  0% {
+    transform: scale(1.5, 1.5);
+  }
+
+  10% {
+    background-color: white;
+  }
+
+  90% {
+    background-color: #0077cc;
+    transform: scale(1, 1);
+  }
+
+  100% {}
+}
+
+@keyframes clean {
+  0% {}
+
+  10% {
+    background-color: white;
+  }
+
+  90% {
+    background-color: #44ff00;
+  }
+
+  100% {
+    background-color: #44ff00;
+  }
+}
+
 input[type="number"] {
   border-color: #afafaf;
   background-color: #fcfcfc;
@@ -87,18 +154,30 @@ header h1 {
 
 .circle.clean {
   background-color: #44ff00;
+  animation-name: clean;
+  animation-duration: 0.5s;
+  animation-iteration-count: 1;
 }
 
 .circle.incubating {
   background-color: #ffff00;
+  animation-name: incubation;
+  animation-duration: 0.5s;
+  animation-iteration-count: 1;
 }
 
 .circle.infectious {
   background-color: #ff7090;
+  animation-name: infectious;
+  animation-duration: 0.5s;
+  animation-iteration-count: 1;
 }
 
 .circle.post-infection {
   background-color: #0077cc;
+  animation-name: post-infection;
+  animation-duration: 0.5s;
+  animation-iteration-count: 1;
 }
 
 .link {

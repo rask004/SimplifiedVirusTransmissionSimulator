@@ -1,4 +1,5 @@
-const speedStep = 500;
+const incrementStep = 50;
+const speedStep = 10 * incrementStep;
 const speedMax = speedStep * 10;
 const speedMin = speedStep * 1;
 const infectiousDayEarliestMin = 1;
@@ -18,6 +19,7 @@ const bubbleWidth = 140;
 const personWidth = 20;
 
 var speed = speedStep * 2;
+var _increment = speed;
 var infectiousDayEarliest = 5;
 var infectiousDayLatest = 14;
 var infectiousPeriodDays = 7;
@@ -153,9 +155,6 @@ document
   .querySelector("#control-play-pause")
   .addEventListener("click", function (e) {
     if (!runScenario) {
-      if (currentDay === 0) {
-        prepareSimulation();
-      }
       startSimulation();
       document.querySelector("#control-play-pause").innerHTML = "Pause";
       setControlsDisabled(true);
@@ -182,7 +181,7 @@ var setControlsDisabled = function (disable) {
 var changeMask = function (node) {
   let person = node.data.person;
   person.wearingMask = !person.wearingMask;
-}
+};
 
 /*** VISUALIZATION SETUP ***/
 var prepareVisualizationData = function () {
@@ -384,10 +383,6 @@ var prepareVisualizationData = function () {
 
   peopleNodes[28].addLink(peopleNodes[26]);
   peopleNodes[26].addLink(peopleNodes[28]);
-
-  // patient zero
-  peopleNodes[0].data.person.startInfection();
-  totalAffected += 1;
 };
 
 var updateVisualizationData = function () {
@@ -481,10 +476,7 @@ var renderInitialVisualization = function () {
     },
   };
 
-  var renderBubble = function (
-    origin,
-    bubbleName
-  ) {
+  var renderBubble = function (origin, bubbleName) {
     let element = document.createElement("div");
     element.id = bubbleName;
     element.style.position = `absolute`;
@@ -495,12 +487,7 @@ var renderInitialVisualization = function () {
     arena.appendChild(element);
   };
 
-  var renderPeople = function (
-    origin,
-    nodes,
-    initAngle = 0,
-    clockwise = true
-  ) {
+  var renderPeople = function (origin, nodes, initAngle = 0, clockwise = true) {
     let r = (bubbleWidth - bubbleWidth / nodes.length) / 3;
     let aDiff = 360 / nodes.length;
     let a = initAngle;
@@ -579,14 +566,14 @@ var renderInitialVisualization = function () {
 
     w = Math.sqrt(
       Math.pow(sElementLeft - eElementLeft, 2) +
-      Math.pow(sElementTop - eElementTop, 2)
+        Math.pow(sElementTop - eElementTop, 2)
     );
 
     // I ain't got no clue why I gotta add 180 here but it works and it's 2 in the morning.
     a =
       (Math.atan2(sElementTop - eElementTop, sElementLeft - eElementLeft) *
         180) /
-      Math.PI +
+        Math.PI +
       180;
 
     let link = document.createElement("div");
@@ -694,14 +681,14 @@ var renderResults = function () {
 // see `resetSimulation` for clearing Visualization Rendering
 
 /*** SIMULATION MANAGEMENT ***/
-var prepareSimulation = function () {
-  prepareVisualizationData();
-  renderInitialVisualization();
-};
 
 var startSimulation = function () {
   runScenario = true;
-  mainLoop();
+  if (currentDay === 0) {
+    // prepare patient zero
+    peopleNodes[0].data.person.startInfection();
+    totalAffected += 1;
+  }
 };
 
 var stopSimulation = function () {
@@ -720,30 +707,33 @@ var resetSimulation = function () {
   renderResults();
   Person.resetID();
   GraphNode.resetID();
+  prepareVisualizationData();
+  renderInitialVisualization();
 };
 
 /*** EVENT LOOP ***/
 var mainLoop = function () {
-  if (!runScenario) {
-    return;
+  _increment -= incrementStep;
+  if (_increment <= 0) {
+    if (runScenario) {
+      currentDay += 1;
+      updateVisualizationData();
+    }
+    _increment = speed;
   }
-  currentDay += 1;
 
-  updateVisualizationData();
   renderUpdatedVisualization();
   renderResults();
 
+  //console.log("Day:", currentDay);
+
   setTimeout(function () {
     mainLoop();
-  }, speed);
+  }, incrementStep);
 };
 
 /*** LOADING ***/
 window.onload = function () {
   resetSimulation();
-  let arena = document.querySelector("#arena");
-  arena.style.width = `${arenaWidth}px`;
-  arena.style.height = `${arenaHeight}px`;
+  mainLoop();
 };
-
-window.onresize = function () {};
