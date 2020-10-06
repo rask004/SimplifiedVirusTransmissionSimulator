@@ -32,8 +32,12 @@ class Person {
 
 
   constructor(earliestInfectiousDay, latestInfectiousDay, infectiousDays,
-    maxInfectiousProb, maskReductionProb, isWearingMask) {
-    this.id = Person.defaultID();
+    maxInfectiousProb, maskReductionProb, isWearingMask, id = undefined) {
+    if (id === undefined) {
+      this.id = Person.defaultID();
+    } else {
+      this.id = id;
+    }
     this.infectionEarliestDay = earliestInfectiousDay;
     this.infectionLatestDay = latestInfectiousDay;
     this.infectiousPeriod = infectiousDays;

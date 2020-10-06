@@ -30,11 +30,280 @@ var peopleNodes = [];
 var currentInfectedPeople = [];
 var postInfectedPeople = [];
 
+var newInfectionLinks = [];
+
 var currentDay = 0;
 var currentlyInfectious = 0;
 var totalAffected = 1;
 
 var runScenario = true;
+
+/*** VISUALISATION DATA 
+ *  Format:
+ *    - bubbles
+ *      x, y:                                 coordinates for the visualisation HTML container.
+ *      initialAngle, distributeClockwise:    control parameters for auto distribution of person nodes in the bubble.
+ * 
+ *    - people      (list of people objects)
+ *      name:                                 name of person. Acts as an object id.
+ *      bubble:                               key/id of the bubble the person belongs in.
+ * 
+ *    - links       (list of links between people)
+ *      [name1, name2]:                       array, two items, represents a two way link/connection between the people with these names.
+ * 
+ *    - patientZero:
+ *        name                                name of person who is initially infected.
+ * ***/
+const visualisationData = {
+  bubbles: {
+    bubble1: {
+      x: 0.4 * arenaWidth - bubbleWidth / 2 + 10,
+      y: 0.5 * arenaHeight - bubbleWidth / 2 + 10,
+      initialAngle: 270,
+      distributeClockwise: true,
+    },
+    bubble2: {
+      x: 0.2 * arenaWidth - bubbleWidth / 2 + 10,
+      y: 0.2 * arenaHeight - bubbleWidth / 2 + 10,
+      initialAngle: 90,
+      distributeClockwise: true,
+    },
+    bubble3: {
+      x: 0.21 * arenaWidth - bubbleWidth / 2 + 10,
+      y: 0.81 * arenaHeight - bubbleWidth / 2 + 10,
+      initialAngle: 180,
+      distributeClockwise: true,
+    },
+    bubble4: {
+      x: 0.6 * arenaWidth - bubbleWidth / 2 + 10,
+      y: 0.2 * arenaHeight - bubbleWidth / 2 + 10,
+      initialAngle: 270,
+      distributeClockwise: true,
+    },
+    bubble5: {
+      x: 0.6 * arenaWidth - bubbleWidth / 2 + 10,
+      y: 0.8 * arenaHeight - bubbleWidth / 2 + 10,
+      initialAngle: 180,
+      distributeClockwise: false,
+    },
+    bubble6: {
+      x: 0.8 * arenaWidth - bubbleWidth / 2 + 10,
+      y: 0.5 * arenaHeight - bubbleWidth / 2 + 10,
+      initialAngle: 0,
+      distributeClockwise: true,
+    },
+  },
+  people: [{
+      name: "P1",
+      bubble: "bubble1"
+    },
+    {
+      name: "P2",
+      bubble: "bubble1"
+    },
+    {
+      name: "P3",
+      bubble: "bubble1"
+    },
+    {
+      name: "P4",
+      bubble: "bubble1"
+    },
+    {
+      name: "P5",
+      bubble: "bubble1"
+    },
+    {
+      name: "P6",
+      bubble: "bubble1"
+    },
+    {
+      name: "P7",
+      bubble: "bubble2"
+    },
+    {
+      name: "P8",
+      bubble: "bubble2"
+    },
+    {
+      name: "P9",
+      bubble: "bubble2"
+    },
+    {
+      name: "P10",
+      bubble: "bubble2"
+    },
+    {
+      name: "P11",
+      bubble: "bubble2"
+    },
+    {
+      name: "P12",
+      bubble: "bubble2"
+    },
+    {
+      name: "P13",
+      bubble: "bubble3"
+    },
+    {
+      name: "P14",
+      bubble: "bubble3"
+    },
+    {
+      name: "P15",
+      bubble: "bubble3"
+    },
+    {
+      name: "P16",
+      bubble: "bubble3"
+    },
+    {
+      name: "P17",
+      bubble: "bubble4"
+    },
+    {
+      name: "P18",
+      bubble: "bubble4"
+    },
+    {
+      name: "P19",
+      bubble: "bubble4"
+    },
+    {
+      name: "P20",
+      bubble: "bubble4"
+    },
+    {
+      name: "P21",
+      bubble: "bubble4"
+    },
+    {
+      name: "P22",
+      bubble: "bubble5"
+    },
+    {
+      name: "P23",
+      bubble: "bubble5"
+    },
+    {
+      name: "P24",
+      bubble: "bubble5"
+    },
+    {
+      name: "P25",
+      bubble: "bubble5"
+    },
+    {
+      name: "P26",
+      bubble: "bubble5"
+    },
+    {
+      name: "P27",
+      bubble: "bubble5"
+    },
+    {
+      name: "P28",
+      bubble: "bubble5"
+    },
+    {
+      name: "P29",
+      bubble: "bubble6"
+    },
+    {
+      name: "P30",
+      bubble: "bubble6"
+    },
+    {
+      name: "P31",
+      bubble: "bubble6"
+    },
+    {
+      name: "P32",
+      bubble: "bubble6"
+    },
+    {
+      name: "P33",
+      bubble: "bubble6"
+    },
+  ],
+  links: [
+    ["P1", "P2"],
+    ["P1", "P3"],
+    ["P1", "P4"],
+    ["P1", "P5"],
+    ["P1", "P6"],
+    ["P2", "P3"],
+    ["P2", "P4"],
+    ["P2", "P5"],
+    ["P2", "P6"],
+    ["P3", "P4"],
+    ["P3", "P5"],
+    ["P3", "P6"],
+    ["P4", "P5"],
+    ["P4", "P6"],
+    ["P5", "P6"],
+    ["P2", "P8"],
+    ["P3", "P21"],
+    ["P4", "P22"],
+    ["P5", "P23"],
+    ["P6", "P13"],
+    ["P7", "P8"],
+    ["P7", "P9"],
+    ["P7", "P10"],
+    ["P7", "P11"],
+    ["P7", "P12"],
+    ["P8", "P9"],
+    ["P8", "P10"],
+    ["P8", "P11"],
+    ["P8", "P12"],
+    ["P9", "P10"],
+    ["P9", "P11"],
+    ["P9", "P12"],
+    ["P10", "P11"],
+    ["P10", "P12"],
+    ["P11", "P12"],
+    ["P12", "P18"],
+    ["P13", "P14"],
+    ["P13", "P15"],
+    ["P13", "P16"],
+    ["P14", "P15"],
+    ["P14", "P16"],
+    ["P15", "P16"],
+    ["P17", "P18"],
+    ["P17", "P19"],
+    ["P17", "P20"],
+    ["P17", "P21"],
+    ["P18", "P19"],
+    ["P18", "P20"],
+    ["P18", "P21"],
+    ["P19", "P20"],
+    ["P19", "P21"],
+    ["P20", "P21"],
+    ["P22", "P23"],
+    ["P22", "P24"],
+    ["P22", "P28"],
+    ["P23", "P24"],
+    ["P23", "P27"],
+    ["P23", "P28"],
+    ["P24", "P25"],
+    ["P24", "P26"],
+    ["P24", "P28"],
+    ["P25", "P26"],
+    ["P25", "P27"],
+    ["P26", "P27"],
+    ["P26", "P28"],
+    ["P27", "P28"],
+    ["P27", "P29"],
+    ["P29", "P30"],
+    ["P30", "P31"],
+    ["P31", "P32"],
+    ["P32", "P29"],
+    ["P32", "P33"],
+    ["P33", "P29"],
+    ["P33", "P31"],
+  ],
+  patientZero: "P1",
+};
 
 /*** HTML CONTROLS SECTION SETUP ***/
 document.querySelector("#control-speed").min = speedMin;
@@ -181,212 +450,53 @@ var setControlsDisabled = function (disable) {
 var changeMask = function (node) {
   let person = node.data.person;
   person.wearingMask = !person.wearingMask;
+  node.element.blur();
 };
 
 /*** VISUALIZATION SETUP ***/
 var prepareVisualizationData = function () {
-  var p = new Person(
-    infectiousDayEarliest,
-    infectiousDayLatest,
-    infectiousPeriodDays,
-    infectiousProbability,
-    maskReductProbability,
-    false
-  );
-  var n = new GraphNode({
-    person: p,
-    group: "bubble1",
-  });
-  peopleNodes.push(n);
-
-  // first bubble
-  for (let i = 1; i <= 5; i++) {
+  var peopleData = visualisationData.people;
+  var linksData = visualisationData.links;
+  var p, n;
+  for (let item of peopleData) {
     p = new Person(
       infectiousDayEarliest,
       infectiousDayLatest,
       infectiousPeriodDays,
       infectiousProbability,
       maskReductProbability,
-      false
+      false,
+      item.name
     );
     n = new GraphNode({
       person: p,
-      group: "bubble1",
+      group: item.bubble,
     });
     peopleNodes.push(n);
+    //console.log(`added node: ${n.id}, person ${n.data.person.id}`);
   }
 
-  for (let i = 0; i <= 5; i++) {
-    for (let j = 0; j <= 5; j++) {
-      if (i === j) {
-        continue;
-      }
-      peopleNodes[i].addLink(peopleNodes[j]);
+  for (let l of linksData) {
+    //console.log(l);
+    let nodes = peopleNodes.filter(function (item) {
+      //console.log(l, item.data.person.id);
+      return l.includes(item.data.person.id);
+    });
+    if (nodes.length >= 2) {
+      let g = new GraphLink(nodes[0], nodes[1]);
+      nodes[0].addLink(g);
+      nodes[1].addLink(g);
+      //console.log(`new link: ${g.id}, ${g.nodes}`);
     }
   }
 
-  // second bubble
-  for (let i = 6; i <= 11; i++) {
-    p = new Person(
-      infectiousDayEarliest,
-      infectiousDayLatest,
-      infectiousPeriodDays,
-      infectiousProbability,
-      maskReductProbability,
-      false
-    );
-    n = new GraphNode({
-      person: p,
-      group: "bubble2",
-    });
-    peopleNodes.push(n);
-  }
-
-  for (let i = 6; i <= 11; i++) {
-    for (let j = 6; j <= 11; j++) {
-      if (i === j) {
-        continue;
-      }
-      peopleNodes[i].addLink(peopleNodes[j]);
-    }
-  }
-
-  peopleNodes[1].addLink(peopleNodes[7]);
-  peopleNodes[7].addLink(peopleNodes[1]);
-
-  // third bubble
-  for (let i = 12; i <= 15; i++) {
-    p = new Person(
-      infectiousDayEarliest,
-      infectiousDayLatest,
-      infectiousPeriodDays,
-      infectiousProbability,
-      maskReductProbability,
-      false
-    );
-    n = new GraphNode({
-      person: p,
-      group: "bubble3",
-    });
-    peopleNodes.push(n);
-  }
-
-  for (let i = 12; i <= 15; i++) {
-    for (let j = 12; j <= 15; j++) {
-      if (i === j) {
-        continue;
-      }
-      peopleNodes[i].addLink(peopleNodes[j]);
-    }
-  }
-
-  peopleNodes[12].addLink(peopleNodes[5]);
-  peopleNodes[5].addLink(peopleNodes[12]);
-
-  // fourth bubble
-  for (let i = 16; i <= 20; i++) {
-    p = new Person(
-      infectiousDayEarliest,
-      infectiousDayLatest,
-      infectiousPeriodDays,
-      infectiousProbability,
-      maskReductProbability,
-      false
-    );
-    n = new GraphNode({
-      person: p,
-      group: "bubble4",
-    });
-    peopleNodes.push(n);
-  }
-
-  for (let i = 16; i <= 20; i++) {
-    for (let j = 16; j <= 20; j++) {
-      if (i === j) {
-        continue;
-      }
-      peopleNodes[i].addLink(peopleNodes[j]);
-    }
-  }
-
-  peopleNodes[2].addLink(peopleNodes[20]);
-  peopleNodes[20].addLink(peopleNodes[2]);
-  peopleNodes[17].addLink(peopleNodes[11]);
-  peopleNodes[11].addLink(peopleNodes[17]);
-
-  // fifth bubble
-  for (let i = 21; i <= 27; i++) {
-    p = new Person(
-      infectiousDayEarliest,
-      infectiousDayLatest,
-      infectiousPeriodDays,
-      infectiousProbability,
-      maskReductProbability,
-      false
-    );
-    n = new GraphNode({
-      person: p,
-      group: "bubble5",
-    });
-    peopleNodes.push(n);
-  }
-  for (let i = 21; i <= 26; i++) {
-    peopleNodes[i].addLink(peopleNodes[i + 1]);
-    peopleNodes[i + 1].addLink(peopleNodes[i]);
-  }
-  for (let x of [21, 22, 23, 25]) {
-    peopleNodes[27].addLink(peopleNodes[x]);
-    peopleNodes[x].addLink(peopleNodes[27]);
-  }
-  for (let x of [21, 25]) {
-    peopleNodes[23].addLink(peopleNodes[x]);
-    peopleNodes[x].addLink(peopleNodes[23]);
-  }
-  for (let x of [24, 26]) {
-    peopleNodes[22].addLink(peopleNodes[x]);
-    peopleNodes[x].addLink(peopleNodes[22]);
-  }
-
-  peopleNodes[21].addLink(peopleNodes[3]);
-  peopleNodes[3].addLink(peopleNodes[21]);
-  peopleNodes[22].addLink(peopleNodes[4]);
-  peopleNodes[4].addLink(peopleNodes[22]);
-
-  // sixth bubble
-  for (let i = 28; i <= 32; i++) {
-    p = new Person(
-      infectiousDayEarliest,
-      infectiousDayLatest,
-      infectiousPeriodDays,
-      infectiousProbability,
-      maskReductProbability,
-      false
-    );
-    n = new GraphNode({
-      person: p,
-      group: "bubble6",
-    });
-    peopleNodes.push(n);
-  }
-  for (let i = 28; i <= 31; i++) {
-    peopleNodes[i].addLink(peopleNodes[i + 1]);
-    peopleNodes[i + 1].addLink(peopleNodes[i]);
-  }
-  for (let x of [28, 29, 32]) {
-    peopleNodes[31].addLink(peopleNodes[x]);
-    peopleNodes[x].addLink(peopleNodes[31]);
-  }
-  for (let x of [28, 30]) {
-    peopleNodes[32].addLink(peopleNodes[x]);
-    peopleNodes[x].addLink(peopleNodes[32]);
-  }
-
-  peopleNodes[28].addLink(peopleNodes[26]);
-  peopleNodes[26].addLink(peopleNodes[28]);
+  //console.log(peopleNodes);
 };
 
 var updateVisualizationData = function () {
-  for (n of peopleNodes) {
+  newInfectionLinks = [];
+  let target;
+  for (let n of peopleNodes) {
     n.data.person.updateInfection();
     if (n.data.person.infectionState === Person.infectionStates.INFECTIOUS) {
       if (!checkCurrentInfections(n.data.person)) {
@@ -394,13 +504,17 @@ var updateVisualizationData = function () {
         currentlyInfectious += 1;
       }
       for (let l of n.links) {
-        if (
-          l.data.person.infectionState === Person.infectionStates.CLEAN &&
-          Math.random() <= n.data.person.transmissionProbability
-        ) {
-          l.data.person.startInfection();
-          //console.log(`person ${l.data.person.id} infected`);
-          totalAffected += 1;
+        for (x in l) {
+          target = x.destination.data.person;
+          if (
+            target.infectionState === Person.infectionStates.CLEAN &&
+            Math.random() <= n.data.person.transmissionProbability
+          ) {
+            target.startInfection();
+            newInfectionLinks.push(l);
+            //console.log(`person ${target.id} infected`);
+            totalAffected += 1;
+          }
         }
       }
     } else if (
@@ -411,6 +525,8 @@ var updateVisualizationData = function () {
       currentlyInfectious -= 1;
     }
   }
+
+  //console.log(newInfectionLinks);
 };
 
 var checkCurrentInfections = function (person) {
@@ -437,44 +553,7 @@ var checkPostInfected = function (person) {
 var renderInitialVisualization = function () {
   const arena = document.querySelector("#arena");
 
-  var visualisationRenderingData = {
-    bubble1: {
-      x: 0.4 * arenaWidth - bubbleWidth / 2 + 10,
-      y: 0.5 * arenaHeight - bubbleWidth / 2 + 10,
-      initialAngle: 270,
-      distributeClockwise: true,
-    },
-    bubble2: {
-      x: 0.2 * arenaWidth - bubbleWidth / 2 + 10,
-      y: 0.2 * arenaHeight - bubbleWidth / 2 + 10,
-      initialAngle: 90,
-      distributeClockwise: true,
-    },
-    bubble3: {
-      x: 0.21 * arenaWidth - bubbleWidth / 2 + 10,
-      y: 0.81 * arenaHeight - bubbleWidth / 2 + 10,
-      initialAngle: 180,
-      distributeClockwise: true,
-    },
-    bubble4: {
-      x: 0.6 * arenaWidth - bubbleWidth / 2 + 10,
-      y: 0.2 * arenaHeight - bubbleWidth / 2 + 10,
-      initialAngle: 270,
-      distributeClockwise: true,
-    },
-    bubble5: {
-      x: 0.6 * arenaWidth - bubbleWidth / 2 + 10,
-      y: 0.8 * arenaHeight - bubbleWidth / 2 + 10,
-      initialAngle: 180,
-      distributeClockwise: false,
-    },
-    bubble6: {
-      x: 0.8 * arenaWidth - bubbleWidth / 2 + 10,
-      y: 0.5 * arenaHeight - bubbleWidth / 2 + 10,
-      initialAngle: 0,
-      distributeClockwise: true,
-    },
-  };
+  var bubbleData = visualisationData.bubbles;
 
   var renderBubble = function (origin, bubbleName) {
     let element = document.createElement("div");
@@ -492,7 +571,6 @@ var renderInitialVisualization = function () {
     let aDiff = 360 / nodes.length;
     let a = initAngle;
     let x, y;
-    let tooltip;
 
     for (let n of nodes) {
       x =
@@ -505,7 +583,6 @@ var renderInitialVisualization = function () {
         origin.y +
         bubbleWidth / 2 -
         personWidth / 2;
-      tooltip = `${n.data.person.id}`;
 
       let e = document.createElement("button");
       e.classList.add("circle");
@@ -525,8 +602,8 @@ var renderInitialVisualization = function () {
       e.style.position = "absolute";
       e.style.left = `${x}px`;
       e.style.top = `${y}px`;
-      e.style.width = `${20}px`;
-      e.title = tooltip;
+      e.style.width = `${personWidth}px`;
+      e.title = `${n.data.person.id}`;
 
       e.onclick = function () {
         changeMask(n);
@@ -550,11 +627,11 @@ var renderInitialVisualization = function () {
     }
   };
 
-  var renderLink = function (startElement, endElement) {
-    let l;
-    let t;
-    let w;
-    let a;
+  var renderLink = function (link) {
+    let l, t, w, a;
+
+    let startElement = link.nodes[0].element;
+    let endElement = link.nodes[1].element;
 
     let sElementTop = parseFloat(startElement.style.top);
     let eElementTop = parseFloat(endElement.style.top);
@@ -564,29 +641,30 @@ var renderInitialVisualization = function () {
     l = sElementLeft + parseFloat(startElement.style.width) / 2;
     t = sElementTop + parseFloat(startElement.style.width) / 2;
 
+    //console.log(sElementTop, eElementTop, sElementLeft, eElementLeft, startElement.style.width);
+
     w = Math.sqrt(
       Math.pow(sElementLeft - eElementLeft, 2) +
-        Math.pow(sElementTop - eElementTop, 2)
+      Math.pow(sElementTop - eElementTop, 2)
     );
 
     // I ain't got no clue why I gotta add 180 here but it works and it's 2 in the morning.
     a =
       (Math.atan2(sElementTop - eElementTop, sElementLeft - eElementLeft) *
-        180) /
-        Math.PI +
-      180;
+        180) / Math.PI + 180;
 
-    let link = document.createElement("div");
-    arena.insertBefore(link, arena.firstChild);
-    link.className = "link";
+    let e = link.element;
+    arena.insertBefore(e, arena.firstChild);
+    e.classList.add("link");
 
-    link.style.position = `absolute`;
-    link.style.left = `${l}px`;
-    link.style.top = `${t}px`;
-    link.style.width = `${w}px`;
-    link.style.height = `0`;
-    link.style.transformOrigin = `0 0`;
-    link.style.transform = `rotate(${a}deg)`;
+    e.style.position = `absolute`;
+    e.style.left = `${l}px`;
+    e.style.top = `${t}px`;
+    e.style.width = `${w}px`;
+    e.style.height = `0`;
+    e.style.transformOrigin = `0 0`;
+    e.style.transform = `rotate(${a}deg)`;
+
 
     //console.log(link, startElement, endElement);
   };
@@ -594,11 +672,11 @@ var renderInitialVisualization = function () {
   for (let i = 1; i <= 6; i++) {
     let bubbleName = `bubble${i}`;
     let origin = {
-      x: visualisationRenderingData[bubbleName].x,
-      y: visualisationRenderingData[bubbleName].y,
+      x: bubbleData[bubbleName].x,
+      y: bubbleData[bubbleName].y,
     };
-    let initAngle = visualisationRenderingData[bubbleName].initialAngle;
-    let clockwise = visualisationRenderingData[bubbleName].distributeClockwise;
+    let initAngle = bubbleData[bubbleName].initialAngle;
+    let clockwise = bubbleData[bubbleName].distributeClockwise;
     let bubbleNodes = peopleNodes.filter(function (node) {
       return node.data.group === bubbleName;
     });
@@ -607,13 +685,13 @@ var renderInitialVisualization = function () {
   }
 
   let linkedNodes = [];
-  for (n of peopleNodes) {
+  for (let n of peopleNodes) {
     let links = n.links.filter(function (link) {
       return !linkedNodes.includes(link);
     });
-    for (l of links) {
+    for (let l of links) {
       if (!linkedNodes.includes(n)) {
-        renderLink(n.element, l.element);
+        renderLink(l);
       }
     }
     linkedNodes.push(n);
@@ -622,14 +700,11 @@ var renderInitialVisualization = function () {
 
 var renderUpdatedVisualization = function () {
   let e;
-  let p;
-  for (n of peopleNodes) {
+  for (let n of peopleNodes) {
     e = n.element;
     if (e.classList.contains("post-infection")) {
       continue;
-    }
-    p = n.data.person;
-    if (
+    } else if (
       n.data.person.infectionState === Person.infectionStates.POST_INFECTIOUS &&
       e.classList.contains("infectious")
     ) {
@@ -637,6 +712,7 @@ var renderUpdatedVisualization = function () {
       // e.classList.remove("incubating");
       e.classList.remove("infectious");
       e.classList.add("post-infection");
+      e.title = `${n.data.person.id} recovering`;
     } else if (
       n.data.person.infectionState === Person.infectionStates.INFECTIOUS &&
       e.classList.contains("incubating")
@@ -645,6 +721,7 @@ var renderUpdatedVisualization = function () {
       e.classList.remove("incubating");
       e.classList.add("infectious");
       // e.classList.remove("post.infection");
+      e.title = `${n.data.person.id} infectious`;
     } else if (
       n.data.person.infectionState === Person.infectionStates.PRE_INFECTIOUS &&
       e.classList.contains("clean")
@@ -653,22 +730,27 @@ var renderUpdatedVisualization = function () {
       e.classList.add("incubating");
       // e.classList.remove("infectious");
       // e.classList.remove("post.infection");
+      e.title = `${n.data.person.id} incubating...`;
     } else if (
       n.data.person.infectionState === Person.infectionStates.CLEAN &&
       !e.classList.contains("clean")
     ) {
       e.classList.add("clean");
-      // e.classList.remove("incubating");
-      // e.classList.remove("infectious");
-      // e.classList.remove("post.infection");
+      e.classList.remove("incubating");
+      e.classList.remove("infectious");
+      e.classList.remove("post.infection");
+      e.title = `${n.data.person.id}`;
     }
     if (n.data.person.wearingMask) {
       e.classList.add("mask");
     } else {
       e.classList.remove("mask");
     }
+  }
 
-    n.element = e;
+  for (let l of newInfectionLinks) {
+    console.log(l);
+    l.element.classList.add("infection");
   }
 };
 

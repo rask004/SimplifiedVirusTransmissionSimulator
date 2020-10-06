@@ -13,9 +13,9 @@
     />
     <link rel="stylesheet" href="index.css" />
 
-    <script src="person.js"></script>
-    <script src="graphnode.js"></script>
-    <script src="index.js" defer></script>
+    <script src="javascript/person.js"></script>
+    <script src="javascript/graphnode.js"></script>
+    <script src="javascript/index.js" defer></script>
 
     <noscript>Your browser needs to support JavaScript.</noscript>
     <title>VIRUS TRANSMISSION SIMULATOR</title>
@@ -27,10 +27,7 @@
     </header>
     <main>
       <section class="container">
-        <section id="arena">
-          <div></div>
-          <span></span>
-        </section>
+        <section id="arena"></section>
         <section class="controls">
           <section class="controls-group">
             <section id="controls-group-speed">
@@ -85,20 +82,50 @@
           </section>
         </section>
       </section>
-      <aside class="results">
-        <section>
-          <span>Day: </span>
-          <span id="results-day"></span>
-        </section>
-        <section>
-          <span>Infected: </span>
-          <span id="results-infected"></span>
-        </section>
-        <section>
-          <span>Total affected: </span>
-          <span id="results-total"></span>
-        </section>
-      </aside>
+      <section class="container-lower">
+        <aside class="legend">
+          <section class="row">
+            <section class="column">
+              <div class="circle clean"></div>
+              <p>Clean</p>
+            </section>
+            <section class="column">
+              <div class="circle incubating"></div>
+              <p>Incubating</p>
+            </section>
+            <section class="column">
+              <div class="circle infectious"></div>
+              <p>Incubating</p>
+            </section>
+            <section class="column">
+              <div class="circle post-infection"></div>
+              <p>Incubating</p>
+            </section>
+            <section class="column">
+              <div class="circle"></div>
+              <p>No mask</p>
+            </section>
+            <section class="column">
+              <div class="circle mask"></div>
+              <p>With Mask</p>
+            </section>
+          </section>
+        </aside>
+        <aside class="results">
+          <section>
+            <span>Day: </span>
+            <span id="results-day"></span>
+          </section>
+          <section>
+            <span>Infected: </span>
+            <span id="results-infected"></span>
+          </section>
+          <section>
+            <span>Total affected: </span>
+            <span id="results-total"></span>
+          </section>
+        </aside>
+      </section>
     </main>
     <footer>
       <small>(c) Roland Askew</small>
