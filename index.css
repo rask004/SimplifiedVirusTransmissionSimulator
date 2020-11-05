@@ -1,5 +1,5 @@
 :root {
-  --arena-height: 560px;
+  --visualization-height: 560px;
   --controls-width: 240px;
 }
 
@@ -98,23 +98,28 @@
   }
 }
 
-input[type="number"] {
+input[type="number"], select {
   border-color: #afafaf;
   background-color: #fcfcfc;
   border-width: 1.5px;
   border-radius: 4px;
+  width: 60px;
+  box-sizing: border-box;
 }
 
-input[type="checkbox"] {
-  border-color: #afafaf;
-  background-color: #fcfcfc;
-  border-radius: 4px;
+select {
+  width: 90px;
+  white-space: normal;
+}
+
+select:hover {
+  border-width: 2px;
 }
 
 body {
   margin: 8px;
   text-align: center;
-  font: 16px / 8px "Roboto", helvetica, sans-serif;
+  font: 16px / 16px "Roboto", helvetica, sans-serif;
 }
 
 header {
@@ -129,10 +134,10 @@ header h1 {
   display: flex;
   justify-content: space-between;
   margin: 1em auto;
-  min-height: var(--arena-height);
+  min-height: var(--visualization-height);
 }
 
-#arena {
+#visualization {
   border: 1px solid #eeeeee;
   border-radius: 0.5rem;
   margin: 0 auto;
@@ -244,8 +249,14 @@ header h1 {
   padding: 0.5em 0;
 }
 
-.controls-group section div {
-  margin-bottom: 0.5em;
+.controls-group section[id*="title"] {
+  padding: 0.5em 0 0 0;
+}
+
+.controls-group-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
 }
 
 .container-lower {

@@ -1,16 +1,28 @@
+const infectionDistributions = {
+  UNIFORM: "Uniform",
+  LINEAR: "Linear",
+  CURVED: "Curved",
+}
+
+const maskTransmissionRoutes = {
+  RECEIVED: "Received",
+  TRANSMITTED: "Passed on",
+  BOTH: "Received and Passed on",
+}
+
 const incrementStep = 50;
 const speedStep = 10 * incrementStep;
 const speedMax = speedStep * 10;
 const speedMin = speedStep * 1;
 const infectiousDayEarliestMin = 1;
 const infectiousDayLatestMax = 30;
-const infectiousPeriodDaysMin = 1;
-const infectiousPeriodDaysMax = 14;
-const infectiousProbMin = 10;
+const symptomsPeriodDaysMin = 1;
+const symptomsPeriodDaysMax = 28;
+const infectiousProbMin = 0;
 const infectiousProbMax = 100;
 const infectiousProbStep = 5;
-const maskReductProbMin = 10;
-const maskReductProbMax = 90;
+const maskReductProbMin = 0;
+const maskReductProbMax = 100;
 const maskReductProbStep = 5;
 
 const arenaWidth = 1000;
@@ -22,8 +34,10 @@ var speed = speedStep * 2;
 var _increment = speed;
 var infectiousDayEarliest = 5;
 var infectiousDayLatest = 14;
-var infectiousPeriodDays = 7;
+var symptomsPeriodDays = 7;
+var infectionDistribution = infectionDistributions.UNIFORM;
 var infectiousProbability = 80;
+var maskTransmissionRoute = maskTransmissionRoutes.TRANSMITTED;
 var maskReductProbability = 50;
 
 var peopleNodes = [];
@@ -306,6 +320,37 @@ const visualisationData = {
 };
 
 /*** HTML CONTROLS SECTION SETUP ***/
+for (const [key, option] of Object.entries(infectionDistributions)) {
+  let element = document.createElement("option");
+  element.value = option;
+  element.innerHTML = option;
+  document.querySelector("#control-inf-dist").add(element);
+}
+document.querySelector("#control-inf-dist").value = infectionDistributions.LINEAR;
+document
+  .querySelector("#control-inf-dist")
+  .addEventListener("click", function (e) {
+    console.log(e);
+    let val = e.target.selectedOptions[0].value;
+    infectionDistribution = val;
+    //console.log(infectionDistribution);
+  });
+
+for (const [key, option] of Object.entries(maskTransmissionRoutes)) {
+  let element = document.createElement("option");
+  element.value = option;
+  element.innerHTML = option;
+  document.querySelector("#control-mask-trans").add(element);
+}
+document.querySelector("#control-mask-trans").value = maskTransmissionRoutes.TRANSMITTED;
+document
+  .querySelector("#control-mask-trans")
+  .addEventListener("click", function (e) {
+    let val = e.target.selectedOptions[0].value;
+    maskTransmissionRoute = val;
+    //console.log(maskTransmissionRoute);
+  });
+
 document.querySelector("#control-speed").min = speedMin;
 document.querySelector("#control-speed").max = speedMax;
 document.querySelector("#control-speed").step = speedStep;
@@ -363,22 +408,22 @@ document
   .querySelector("#control-inc-max")
   .addEventListener("input", incubationControlsListener);
 
-document.querySelector("#control-inf-period").min = infectiousPeriodDaysMin;
-document.querySelector("#control-inf-period").max = infectiousPeriodDaysMax;
-document.querySelector("#control-inf-period").step = 1;
-document.querySelector("#control-inf-period").value = infectiousPeriodDays;
+document.querySelector("#control-sympt-period").min = symptomsPeriodDaysMin;
+document.querySelector("#control-sympt-period").max = symptomsPeriodDaysMax;
+document.querySelector("#control-sympt-period").step = 1;
+document.querySelector("#control-sympt-period").value = symptomsPeriodDays;
 document
-  .querySelector("#control-inf-period")
+  .querySelector("#control-sympt-period")
   .addEventListener("input", function (e) {
     if (e.target.type === "number") {
       let val = parseInt(e.target.value);
-      if (val > infectiousPeriodDaysMax) {
-        val = infectiousPeriodDaysMax;
-      } else if (val < infectiousPeriodDaysMin) {
-        val = infectiousPeriodDaysMin;
+      if (val > symptomsPeriodDaysMax) {
+        val = symptomsPeriodDaysMax;
+      } else if (val < symptomsPeriodDaysMin) {
+        val = symptomsPeriodDaysMin;
       }
-      document.querySelector("#control-inf-period").value = val;
-      infectiousPeriodDays = val;
+      document.querySelector("#control-sympt-period").value = val;
+      symptomsPeriodDays = val;
     }
   });
 
@@ -442,7 +487,7 @@ document
 var setControlsDisabled = function (disable) {
   document.querySelector("#control-inc-min").disabled = disable;
   document.querySelector("#control-inc-max").disabled = disable;
-  document.querySelector("#control-inf-period").disabled = disable;
+  document.querySelector("#control-sympt-period").disabled = disable;
   document.querySelector("#control-inf-prob").disabled = disable;
   document.querySelector("#control-mask-reduction").disabled = disable;
 };
@@ -453,6 +498,12 @@ var changeMask = function (node) {
   node.element.blur();
 };
 
+var setMaskControlsDisabled = function (disable) {
+  for (let node of peopleNodes) {
+    node.nodeElement.disabled = disable;
+  }
+}
+
 /*** VISUALIZATION SETUP ***/
 var prepareVisualizationData = function () {
   var peopleData = visualisationData.people;
@@ -462,7 +513,7 @@ var prepareVisualizationData = function () {
     p = new Person(
       infectiousDayEarliest,
       infectiousDayLatest,
-      infectiousPeriodDays,
+      symptomsPeriodDays,
       infectiousProbability,
       maskReductProbability,
       false,
@@ -504,8 +555,9 @@ var updateVisualizationData = function () {
         currentlyInfectious += 1;
       }
       for (let l of n.links) {
-        for (x in l) {
-          target = x.destination.data.person;
+        for (x of l.nodes) {
+          //console.log(`linked person ${x}`);
+          target = x.data.person;
           if (
             target.infectionState === Person.infectionStates.CLEAN &&
             Math.random() <= n.data.person.transmissionProbability
@@ -551,7 +603,7 @@ var checkPostInfected = function (person) {
 
 /*** RENDERING AND DRAWING ***/
 var renderInitialVisualization = function () {
-  const arena = document.querySelector("#arena");
+  const arena = document.querySelector("#visualization");
 
   var bubbleData = visualisationData.bubbles;
 
@@ -749,7 +801,6 @@ var renderUpdatedVisualization = function () {
   }
 
   for (let l of newInfectionLinks) {
-    console.log(l);
     l.element.classList.add("infection");
   }
 };
@@ -770,7 +821,9 @@ var startSimulation = function () {
     // prepare patient zero
     peopleNodes[0].data.person.startInfection();
     totalAffected += 1;
+    //console.log(`nodes: ${peopleNodes}`);
   }
+  setMaskControlsDisabled(true);
 };
 
 var stopSimulation = function () {
@@ -779,9 +832,10 @@ var stopSimulation = function () {
 
 var resetSimulation = function () {
   runScenario = false;
-  document.querySelector("#arena").innerHTML = "";
+  document.querySelector("#visualization").innerHTML = "";
   document.querySelector("#control-play-pause").innerHTML = "Play";
   setControlsDisabled(false);
+  setMaskControlsDisabled(false);
   peopleNodes = [];
   currentDay = 0;
   currentlyInfectious = 0;
