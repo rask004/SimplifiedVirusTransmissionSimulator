@@ -199,7 +199,7 @@ header h1 {
   animation-iteration-count: 1;
 }
 
-.circle.infectious {
+.circle.symptomatic {
   background-color: #ff7090;
   animation-name: infectious;
   animation-duration: 0.5s;
@@ -245,8 +245,21 @@ header h1 {
   color: #5a5a5a;
 }
 
+.controls-group img {
+  border: 1px solid #eeeeee;
+  width: 32px;
+  height: auto;
+  margin-left: 0.5em;
+  transform: translateY(0.333em);
+  padding: 1px;
+}
+
 .controls-group section {
-  padding: 0.5em 0;
+  padding: 0.5em 0 0 0;
+}
+
+.controls-group section:last-child {
+  padding-bottom: 0.5em;
 }
 
 .controls-group section[id*="title"] {

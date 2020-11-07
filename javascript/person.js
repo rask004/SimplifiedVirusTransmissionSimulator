@@ -13,34 +13,39 @@ class Person {
 
   static infectionStates = {
     CLEAN: 0,
-    PRE_INFECTIOUS: 1,
-    INFECTIOUS: 2,
+    INCUBATING: 1,
+    SYMPTOMATIC: 2,
     POST_INFECTIOUS: 3,
   }
+
+  // TODO: modify this to remove the calculate infection probability function.
+  // have the day of max infectiousness, the incubation period, and the symptomatic period.
+  // there should be getters to get the current day of infection, the first day of infection, the day of max infection, and the last day of infection.
+  // the getter for current infection day should return 0 if the person is not infectious.
 
   id;
   infected = Person.infectionStates.CLEAN;
   mask;
-  infectedDays = 0;
-  transmissionDays = 0;
-  infectionEarliestDay;
-  infectionLatestDay;
-  infectiousPeriod;
   maxInfProb;
   maskReductProb;
-  _maxInfectiousDay;
+  
+  infectedDays = 0;
+
+  incubationPeriod; // Days
+  symptomaticPeriod; // Days
+  dayOfMaxInfectiousProbability;
 
 
-  constructor(earliestInfectiousDay, latestInfectiousDay, infectiousDays,
-    maxInfectiousProb, maskReductionProb, isWearingMask, id = undefined) {
+  constructor(incubationPeriodDays, symptomaticPeriodDays, symptomaticDayOfMaxProbInfection, maxInfectiousProb, maskReductionProb, isWearingMask, id = undefined) {
     if (id === undefined) {
       this.id = Person.defaultID();
     } else {
       this.id = id;
     }
-    this.infectionEarliestDay = earliestInfectiousDay;
-    this.infectionLatestDay = latestInfectiousDay;
-    this.infectiousPeriod = infectiousDays;
+    
+    this.incubationPeriod = incubationPeriodDays;
+    this.dayOfMaxInfectiousProbability = symptomaticDayOfMaxProbInfection;
+    this.symptomaticPeriod = symptomaticPeriodDays;
     this.maxInfProb = maxInfectiousProb;
     this.maskReductProb = maskReductionProb;
     this.mask = isWearingMask;
@@ -61,60 +66,77 @@ class Person {
     return this.infected;
   }
 
-  startInfection() {
-    if (this.infected === Person.infectionStates.CLEAN) {
-      this.infected = Person.infectionStates.PRE_INFECTIOUS;
-    }
-  }
-
-  get wearingMask() {
+  get isWearingMask() {
     return this.mask;
   }
 
-  set wearingMask(isWearingMask) {
-    this.mask = isWearingMask;
+  set isWearingMask(x) {
+    this.mask = x;
+  }
+
+  startInfection() {
+    if (this.infected === Person.infectionStates.CLEAN) {
+      this.infected = Person.infectionStates.INCUBATING;
+    }
   }
 
   updateInfection() {
     if (this.infected !== Person.infectionStates.CLEAN) {
       this.infectedDays += 1;
-      if (this.infected === Person.infectionStates.PRE_INFECTIOUS &&
-        this.infectedDays >= this.infectionEarliestDay &&
-        this.infectedDays < this.infectionLatestDay) {
-        let changeProbability = (this.infectedDays - this.infectionEarliestDay) / (this.infectionLatestDay - this.infectionEarliestDay);
-        let check = Math.random();
-        if (check <= changeProbability) {
-          this.infected = Person.infectionStates.INFECTIOUS;
-        }
-      } else if (this.infected === Person.infectionStates.PRE_INFECTIOUS &&
-        this.infectedDays >= this.infectionLatestDay) {
-        this.infected = Person.infectionStates.INFECTIOUS
-      } else if (this.infected === Person.infectionStates.INFECTIOUS &&
-        this.transmissionDays <= this.infectiousPeriod) {
-        this.transmissionDays += 1;
-      } else if (this.infected === Person.infectionStates.INFECTIOUS &&
-        this.transmissionDays > this.infectiousPeriod) {
-        this.infected = Person.infectionStates.POST_INFECTIOUS
+      if (this.infectedDays > (this.incubationPeriod + this.symptomaticPeriod) && this.infected != Person.infectionStates.POST_INFECTIOUS) {
+        this.infected = Person.infectionStates.POST_INFECTIOUS;
+      }
+      else if (this.infectedDays <= (this.incubationPeriod + this.symptomaticPeriod) && this.infectedDays > this.incubationPeriod && this.infected != Person.infectionStates.SYMPTOMATIC) {
+        this.infected = Person.infectionStates.SYMPTOMATIC;
       }
     }
   }
 
-  get transmissionProbability() {
-    let c = (this.infectiousPeriod + 1) / 2;
-    let prob;
-    if (this.transmissionDays === c) {
-      prob = this.maxInfProb;
-    } else if (this.transmissionDays > c) {
-      prob = this.maxInfProb * ((2 * c - this.transmissionDays) / c);
-    } else if (this.transmissionDays < c) {
-      prob = this.maxInfProb * (this.transmissionDays / c);
-    } else {
-      prob = 0;
-    }
-    if (this.mask) {
-      prob *= (1 - this.maskReductProb);
-    }
+  get maximumInfectionProbability() {
+    return this.maxInfProb;
+  }
 
-    return prob / 100;
+  set maximumInfectionProbability(x) {
+    this.maxInfProb = x;
+  }
+
+  get maskInfectionReductionProbability() {
+    return this.maskReductProb;
+  }
+
+  set maskInfectionReductionProbability(x) {
+    this.maskReductProb = x;
+  }
+
+  get infectionPeriodInDays() {
+    return this.incubationPeriod;
+  }
+
+  set infectionPeriodInDays(x) {
+    this.incubationPeriod = x;
+  }
+
+  get symptomsPeriodDays() {
+    return this.symptomaticPeriod;
+  }
+
+  set symptomsPeriodDays(x) {
+    this.symptomaticPeriod = x;
+  }
+
+  get symptomsDayOfPeakInfectionRisk() {
+    return this.dayOfMaxInfectiousProbability;
+  }
+
+  set symptomsDayOfPeakInfectionRisk(x) {
+    this.dayOfMaxInfectiousProbability = x;
+  }
+
+  get lengthOfInfectionInDays() {
+    return this.infectedDays;
+  }
+
+  set lengthOfInfectionInDays(x) {
+    this.infectedDays = x;
   }
 }

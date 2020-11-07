@@ -1,14 +1,5 @@
-const infectionDistributions = {
-  UNIFORM: "Uniform",
-  LINEAR: "Linear",
-  CURVED: "Curved",
-}
-
-const maskTransmissionRoutes = {
-  RECEIVED: "Received",
-  TRANSMITTED: "Passed on",
-  BOTH: "Received and Passed on",
-}
+/*** CONSTANTS ***/
+const assetImageBasePath = "./assets/images/";
 
 const incrementStep = 50;
 const speedStep = 10 * incrementStep;
@@ -35,12 +26,13 @@ var _increment = speed;
 var infectiousDayEarliest = 5;
 var infectiousDayLatest = 14;
 var symptomsPeriodDays = 7;
-var infectionDistribution = infectionDistributions.UNIFORM;
+var infectionDistribution = TransmissionManager.infectionDistributions.LINEAR;
 var infectiousProbability = 80;
-var maskTransmissionRoute = maskTransmissionRoutes.TRANSMITTED;
+var maskTransmissionRoute = TransmissionManager.maskTransmissionRoutes.TRANSMIT;
 var maskReductProbability = 50;
 
 var peopleNodes = [];
+var initialInfected = [];
 var currentInfectedPeople = [];
 var postInfectedPeople = [];
 
@@ -65,8 +57,8 @@ var runScenario = true;
  *    - links       (list of links between people)
  *      [name1, name2]:                       array, two items, represents a two way link/connection between the people with these names.
  * 
- *    - patientZero:
- *        name                                name of person who is initially infected.
+ *    - initialInfections  (list of people names)
+ *        [name, ...]                                names of people who are initially infected.
  * ***/
 const visualisationData = {
   bubbles: {
@@ -316,39 +308,55 @@ const visualisationData = {
     ["P33", "P29"],
     ["P33", "P31"],
   ],
-  patientZero: "P1",
+  initialInfections: [
+    "P2", "?", 
+  ],
 };
 
-/*** HTML CONTROLS SECTION SETUP ***/
-for (const [key, option] of Object.entries(infectionDistributions)) {
-  let element = document.createElement("option");
-  element.value = option;
-  element.innerHTML = option;
-  document.querySelector("#control-inf-dist").add(element);
+/*** HELPER FUNCTIONS ***/
+var updateInfectionPeriodInDays = function () {
+  return Math.round(Math.random() * (infectiousDayLatest - infectiousDayEarliest)) + infectiousDayEarliest;
 }
-document.querySelector("#control-inf-dist").value = infectionDistributions.LINEAR;
+
+var updateSymptomsDayOfMaxInfectionRisk = function () {
+  return Math.round(Math.random() * (symptomsPeriodDays - 3) + 2);
+}
+
+/*** HTML CONTROLS SECTION SETUP ***/
+for (const [key, val] of Object.entries(TransmissionManager.infectionDistributions)) {
+  let option = document.createElement("option");
+  option.value = val;
+  option.innerHTML = val;
+  document.querySelector("#control-inf-dist").add(option);
+}
+document.querySelector("#control-inf-dist").value = TransmissionManager.infectionDistributions.LINEAR;
+document.querySelector("#control-inf-dist-img").src = `${assetImageBasePath}${TransmissionManager.infectionDistributions.LINEAR}.jpg`;
 document
   .querySelector("#control-inf-dist")
   .addEventListener("click", function (e) {
-    console.log(e);
+    //console.log(e);
     let val = e.target.selectedOptions[0].value;
     infectionDistribution = val;
+    document.querySelector("#control-inf-dist-img").src = `${assetImageBasePath}${val}.jpg`;
     //console.log(infectionDistribution);
   });
 
-for (const [key, option] of Object.entries(maskTransmissionRoutes)) {
+for (const [key, val] of Object.entries(TransmissionManager.maskTransmissionRoutes)) {
   let element = document.createElement("option");
-  element.value = option;
-  element.innerHTML = option;
+  element.value = val;
+  element.innerHTML = val;
   document.querySelector("#control-mask-trans").add(element);
 }
-document.querySelector("#control-mask-trans").value = maskTransmissionRoutes.TRANSMITTED;
+document.querySelector("#control-mask-trans").value = TransmissionManager.maskTransmissionRoutes.TRANSMIT;
+document.querySelector("#control-mask-trans-img").src = `${assetImageBasePath}${TransmissionManager.maskTransmissionRoutes.TRANSMIT}.jpg`;
 document
   .querySelector("#control-mask-trans")
   .addEventListener("click", function (e) {
+    //console.log(e);
     let val = e.target.selectedOptions[0].value;
     maskTransmissionRoute = val;
-    //console.log(maskTransmissionRoute);
+    document.querySelector("#control-mask-trans-img").src = `${assetImageBasePath}${val}.jpg`;
+    //console.log(val, maskTransmissionRoute, document.querySelector("#control-mask-trans-img").src);
   });
 
 document.querySelector("#control-speed").min = speedMin;
@@ -400,6 +408,7 @@ const incubationControlsListener = function (e) {
   }
   document.querySelector("#control-inc-min").max = infectiousDayLatest - 1;
   document.querySelector("#control-inc-max").min = infectiousDayEarliest + 1;
+  modifyExistingVisualisationData("infectionPeriodInDays", updateInfectionPeriodInDays);
 };
 document
   .querySelector("#control-inc-min")
@@ -424,6 +433,8 @@ document
       }
       document.querySelector("#control-sympt-period").value = val;
       symptomsPeriodDays = val;
+      modifyExistingVisualisationData("symptomsPeriodDays", symptomsPeriodDays);
+      modifyExistingVisualisationData("symptomsDayOfPeakInfectionRisk", updateSymptomsDayOfMaxInfectionRisk);
     }
   });
 
@@ -443,6 +454,7 @@ document
       }
       document.querySelector("#control-inf-prob").value = val;
       infectiousProbability = val;
+      modifyExistingVisualisationData("maximumInfectionProbability", infectiousProbability);
     }
   });
 
@@ -462,6 +474,7 @@ document
       }
       document.querySelector("#control-mask-reduction").value = val;
       maskReductProbability = val;
+      modifyExistingVisualisationData("maskInfectionReductionProbability", maskReductProbability);
     }
   });
 
@@ -490,12 +503,14 @@ var setControlsDisabled = function (disable) {
   document.querySelector("#control-sympt-period").disabled = disable;
   document.querySelector("#control-inf-prob").disabled = disable;
   document.querySelector("#control-mask-reduction").disabled = disable;
+  document.querySelector("#control-mask-trans").disabled = disable;
+  document.querySelector("#control-inf-dist").disabled = disable;
 };
 
 var changeMask = function (node) {
   let person = node.data.person;
-  person.wearingMask = !person.wearingMask;
-  node.element.blur();
+  person.isWearingMask = !person.isWearingMask;
+  //console.log(`person: ${person.id}, mask: ${person.isWearingMask}`);
 };
 
 var setMaskControlsDisabled = function (disable) {
@@ -505,15 +520,16 @@ var setMaskControlsDisabled = function (disable) {
 }
 
 /*** VISUALIZATION SETUP ***/
-var prepareVisualizationData = function () {
+var generateInitialVisualisationData = function () {
   var peopleData = visualisationData.people;
   var linksData = visualisationData.links;
+  var initialInfectionsData = visualisationData.initialInfections;
   var p, n;
   for (let item of peopleData) {
     p = new Person(
-      infectiousDayEarliest,
-      infectiousDayLatest,
+      updateInfectionPeriodInDays(),
       symptomsPeriodDays,
+      updateSymptomsDayOfMaxInfectionRisk(),
       infectiousProbability,
       maskReductProbability,
       false,
@@ -525,6 +541,9 @@ var prepareVisualizationData = function () {
     });
     peopleNodes.push(n);
     //console.log(`added node: ${n.id}, person ${n.data.person.id}`);
+    if (initialInfectionsData.includes(n.data.person.id)) {
+      initialInfected.push(n);
+    }
   }
 
   for (let l of linksData) {
@@ -544,27 +563,65 @@ var prepareVisualizationData = function () {
   //console.log(peopleNodes);
 };
 
-var updateVisualizationData = function () {
+var modifyExistingVisualisationData = function (attribute, value) {
+  for (var n of peopleNodes) {
+    let person = n.data.person;
+    if (value instanceof Function) {
+      person[attribute] = value();
+    }
+    else {
+      person[attribute] = value;
+    }
+    //console.log(`MODIFIED person ${person.id}, symptom days: ${person.symptomsPeriodDays}`);
+    //console.log(`MODIFIED person ${person.id}, max risk day: ${person.symptomsDayOfPeakInfectionRisk}`);
+    //console.log(`MODIFIED person ${person.id}, infection risk: ${person.maximumInfectionProbability}`);
+    //console.log(`MODIFIED person ${person.id}, mask reduction: ${person.maskInfectionReductionProbability}`);
+  }
+}
+
+var updateActiveScenarioVisualizationData = function () {
   newInfectionLinks = [];
-  let target;
+  let target, transmitter;
   for (let n of peopleNodes) {
-    n.data.person.updateInfection();
-    if (n.data.person.infectionState === Person.infectionStates.INFECTIOUS) {
-      if (!checkCurrentInfections(n.data.person)) {
-        currentInfectedPeople.push(n.data.person);
+    transmitter = n.data.person;
+    transmitter.updateInfection();
+    if (transmitter.infectionState === Person.infectionStates.SYMPTOMATIC || transmitter.infectionState === Person.infectionStates.INCUBATING) {
+      //console.log(`transmitter ${transmitter.id}, STATE: ${transmitter.infectionState}`);
+      if (!checkCurrentInfections(transmitter)) {
+        currentInfectedPeople.push(transmitter);
         currentlyInfectious += 1;
       }
+      const data = [
+            0,
+            transmitter.infectionPeriodInDays + transmitter.symptomsDayOfPeakInfectionRisk,
+            transmitter.infectionPeriodInDays + transmitter.symptomsPeriodDays + 1,
+            transmitter.lengthOfInfectionInDays
+          ];
       for (let l of n.links) {
         for (x of l.nodes) {
-          //console.log(`linked person ${x}`);
+          //console.log(`linked person ${x.data.person}`);
           target = x.data.person;
-          if (
-            target.infectionState === Person.infectionStates.CLEAN &&
-            Math.random() <= n.data.person.transmissionProbability
-          ) {
+          if (target.equals(transmitter)) { // || target.infectionState !== Person.infectionStates.CLEAN) {
+            continue;
+          }
+
+          let infectionProbability = TransmissionManager.calculateTransmissionProbability(
+            target.maximumInfectionProbability,
+            infectionDistribution,
+            maskTransmissionRoute,
+            transmitter.isWearingMask,
+            transmitter.maskInfectionReductionProbability,
+            target.isWearingMask,
+            target.maskInfectionReductionProbability,
+            data
+          );
+
+          let threshold = Math.random();
+
+          if (threshold <= infectionProbability && target.infectionState === Person.infectionStates.CLEAN) {
             target.startInfection();
             newInfectionLinks.push(l);
-            //console.log(`person ${target.id} infected`);
+            //console.log(`person ${target.id} infected by ${transmitter.id}, probability check: ${threshold} <= ${infectionProbability}`);
             totalAffected += 1;
           }
         }
@@ -639,7 +696,7 @@ var renderInitialVisualization = function () {
       let e = document.createElement("button");
       e.classList.add("circle");
       if (
-        n.data.person.infectionState === Person.infectionStates.PRE_INFECTIOUS
+        n.data.person.infectionState === Person.infectionStates.INCUBATING
       ) {
         e.classList.add("incubating");
       } else {
@@ -758,24 +815,24 @@ var renderUpdatedVisualization = function () {
       continue;
     } else if (
       n.data.person.infectionState === Person.infectionStates.POST_INFECTIOUS &&
-      e.classList.contains("infectious")
+      e.classList.contains("symptomatic")
     ) {
       // e.classList.remove("clean");
       // e.classList.remove("incubating");
-      e.classList.remove("infectious");
+      e.classList.remove("symptomatic");
       e.classList.add("post-infection");
       e.title = `${n.data.person.id} recovering`;
     } else if (
-      n.data.person.infectionState === Person.infectionStates.INFECTIOUS &&
+      n.data.person.infectionState === Person.infectionStates.SYMPTOMATIC &&
       e.classList.contains("incubating")
     ) {
       // e.classList.remove("clean");
       e.classList.remove("incubating");
-      e.classList.add("infectious");
+      e.classList.add("symptomatic");
       // e.classList.remove("post.infection");
-      e.title = `${n.data.person.id} infectious`;
+      e.title = `${n.data.person.id} symptomatic`;
     } else if (
-      n.data.person.infectionState === Person.infectionStates.PRE_INFECTIOUS &&
+      n.data.person.infectionState === Person.infectionStates.INCUBATING &&
       e.classList.contains("clean")
     ) {
       e.classList.remove("clean");
@@ -789,11 +846,11 @@ var renderUpdatedVisualization = function () {
     ) {
       e.classList.add("clean");
       e.classList.remove("incubating");
-      e.classList.remove("infectious");
+      e.classList.remove("symptomatic");
       e.classList.remove("post.infection");
       e.title = `${n.data.person.id}`;
     }
-    if (n.data.person.wearingMask) {
+    if (n.data.person.isWearingMask) {
       e.classList.add("mask");
     } else {
       e.classList.remove("mask");
@@ -801,7 +858,7 @@ var renderUpdatedVisualization = function () {
   }
 
   for (let l of newInfectionLinks) {
-    l.element.classList.add("infection");
+    l.element.classList.add("symptomatic");
   }
 };
 
@@ -813,14 +870,16 @@ var renderResults = function () {
 
 // see `resetSimulation` for clearing Visualization Rendering
 
-/*** SIMULATION MANAGEMENT ***/
 
+/*** SIMULATION MANAGEMENT ***/
 var startSimulation = function () {
   runScenario = true;
   if (currentDay === 0) {
-    // prepare patient zero
-    peopleNodes[0].data.person.startInfection();
-    totalAffected += 1;
+    // start infections
+    for (node of initialInfected) {
+      node.data.person.startInfection();
+      totalAffected += 1;
+    }
     //console.log(`nodes: ${peopleNodes}`);
   }
   setMaskControlsDisabled(true);
@@ -828,6 +887,7 @@ var startSimulation = function () {
 
 var stopSimulation = function () {
   runScenario = false;
+  setMaskControlsDisabled(false);
 };
 
 var resetSimulation = function () {
@@ -843,7 +903,7 @@ var resetSimulation = function () {
   renderResults();
   Person.resetID();
   GraphNode.resetID();
-  prepareVisualizationData();
+  generateInitialVisualisationData();
   renderInitialVisualization();
 };
 
@@ -853,7 +913,7 @@ var mainLoop = function () {
   if (_increment <= 0) {
     if (runScenario) {
       currentDay += 1;
-      updateVisualizationData();
+      updateActiveScenarioVisualizationData();
     }
     _increment = speed;
   }
