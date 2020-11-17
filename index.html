@@ -13,9 +13,10 @@
     />
     <link rel="stylesheet" href="index.css" />
 
-    <script src="person.js"></script>
-    <script src="graphnode.js"></script>
-    <script src="index.js" defer></script>
+    <script src="javascript/transmission.js"></script>
+    <script src="javascript/person.js"></script>
+    <script src="javascript/graphnode.js"></script>
+    <script src="javascript/index.js" defer></script>
 
     <noscript>Your browser needs to support JavaScript.</noscript>
     <title>VIRUS TRANSMISSION SIMULATOR</title>
@@ -27,22 +28,23 @@
     </header>
     <main>
       <section class="container">
-        <section id="arena">
-          <div></div>
-          <span></span>
-        </section>
+        <section id="visualization"></section>
         <section class="controls">
           <section class="controls-group">
+            <section id="controls-group-speed-title">
+              <label>Speed</label>
+            </section>
             <section id="controls-group-speed">
-              <div><label for="control-speed">Speed</label></div>
               <input type="number" id="control-speed" />
               <label for="control-speed">ms</label>
             </section>
           </section>
 
           <section class="controls-group">
+            <section id="controls-group-incubation-title">
+              <label>Incubation Period</label>
+            </section>
             <section id="controls-group-incubation">
-              <div><label for="control-inc-min">Incubation Period</label></div>
               <input type="number" id="control-inc-min" />
               <label for="control-inc-min">to</label>
               <input type="number" id="control-inc-max" />
@@ -51,54 +53,104 @@
           </section>
 
           <section class="controls-group">
-            <section id="controls-group-infectious-period">
-              <div><label for="control-inf-period">Infection</label></div>
-              <label for="control-inf-period">Period: </label>
-              <input type="number" id="control-inf-period" />
-              <label for="control-inf-period">days</label>
+            <section id="controls-group-symptomatic-title">
+              <label>Symptoms</label>
+            </section>
+            <section id="controls-group-symptomatic-period">
+              <label for="control-sympt-period">Show for: </label>
+              <input type="number" id="control-sympt-period" />
+              <label for="control-sympt-period">days</label>
+            </section>
+          </section>
+
+          <section class="controls-group">
+            <section id="controls-group-inf-title">
+              <label>Infection</label>
             </section>
             <section id="controls-group-infection-probability">
               <label for="control-inf-prob">Probability: </label>
               <input type="number" id="control-inf-prob" />
               <label for="control-inf-prob">%</label>
             </section>
+            <section id="controls-group-infection-distribution">
+              <label for="control-inf-dist">Pattern: </label>
+              <select id="control-inf-dist"></select>
+              <img id="control-inf-dist-img" />
+            </section>
           </section>
 
           <section class="controls-group">
-            <section id="controls-group-mask-probabiltiy">
-              <div>
-                <label for="control-mask-reduction">Mask Reduction</label>
-              </div>
+            <section id="controls-group-masks-title">
+              <label>Mask Reduction</label>
+            </section>
+            <section id="controls-group-mask-probability">
               <label for="control-mask-reduction">Probability: </label>
-              <input type="number" disabled id="control-mask-reduction" />
+              <input type="number" id="control-mask-reduction" />
               <label for="control-mask-reduction">%</label>
             </section>
+            <section id="controls-group-mask-transmission">
+              <label for="control-mask-trans">When: </label>
+              <select id="control-mask-trans"></select>
+              <img id="control-mask-trans-img" />
+            </section>
           </section>
 
           <section class="controls-group">
-            <section id="controls-group-play-pause">
-              <button id="control-play-pause">Play</button>
-            </section>
-            <section id="controls-group-reset">
-              <button id="control-reset">Reset</button>
-            </section>
+            <div class="controls-group-buttons">
+              <section id="controls-group-play-pause">
+                <button id="control-play-pause">Play</button>
+              </section>
+              <section id="controls-group-reset">
+                <button id="control-reset">Reset</button>
+              </section>
+            </div>
           </section>
         </section>
       </section>
-      <aside class="results">
-        <section>
-          <span>Day: </span>
-          <span id="results-day"></span>
-        </section>
-        <section>
-          <span>Infected: </span>
-          <span id="results-infected"></span>
-        </section>
-        <section>
-          <span>Total affected: </span>
-          <span id="results-total"></span>
-        </section>
-      </aside>
+      <section class="container-lower">
+        <aside class="legend">
+          <section class="row">
+            <section class="column">
+              <div class="circle clean"></div>
+              <p>Clean</p>
+            </section>
+            <section class="column">
+              <div class="circle incubating"></div>
+              <p>Incubating</p>
+            </section>
+            <section class="column">
+              <div class="circle symptomatic"></div>
+              <p>Symptomatic</p>
+            </section>
+            <section class="column">
+              <div class="circle post-infection"></div>
+              <p>Recovering</p>
+            </section>
+            <section class="column">
+              <div class="circle"></div>
+              <p>No mask</p>
+            </section>
+            <section class="column">
+              <div class="circle mask"></div>
+              <p>With Mask</p>
+            </section>
+          </section>
+        </aside>
+        <aside class="results">
+          <section>
+            <span>Day: </span>
+            <span id="results-day"></span>
+          </section>
+          <section>
+            <span>Infected: </span>
+            <span id="results-infected"></span>
+          </section>
+          <section>
+            <span>Total affected: </span>
+            <span id="results-total"></span>
+          </section>
+        </aside>
+      </section>
     </main>
     <footer>
       <small>(c) Roland Askew</small>
